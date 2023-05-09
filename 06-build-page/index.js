@@ -30,16 +30,24 @@ async function createStyleFile() {
     }
 }
 
-async function createAssets(srcCopyFolder, srcToCopiedFolder) {
-    await fsPromises.mkdir(srcToCopiedFolder, { recursive: true }, err => {
+async function createAssets() {
+    await fsPromises.mkdir(path.join(__dirname, 'project-dist', 'assets'), { recursive: true }, err => {
         if (err) throw err;
     });
-    let arrOfAssets = await fsPromises.readdir(srcCopyFolder, {withFileTypes: true});
+    let arrOfAssets = await fsPromises.readdir(path.join(__dirname, 'assets'), {withFileTypes: true});
     for (let assetsFile of arrOfAssets) {
         if(assetsFile.isFile()) {
-            await fsPromises.copyFile(path.join(srcCopyFolder, assetsFile.name), path.join(srcToCopiedFolder, assetsFile.name));
+            await fsPromises.copyFile(path.join(__dirname, 'assets'), path.join(__dirname, 'project-dist', 'assets', assetsFile.name));
         } else {
-            await createAssets(path.join(srcCopyFolder, assetsFile.name), path.join(srcToCopiedFolder, assetsFile.name))
+            await fsPromises.mkdir(path.join(__dirname, 'project-dist', 'assets', assetsFile.name), { recursive: true }, err => {
+                if (err) throw err;
+            });
+            let arrOfAssetsinFolder = await fsPromises.readdir(path.join(__dirname, 'assets', assetsFile.name), {withFileTypes: true});
+            for (let fileInAssetsFolder of arrOfAssetsinFolder) {
+                if(fileInAssetsFolder.isFile()) {
+                    await fsPromises.copyFile(path.join(__dirname, 'assets', assetsFile.name, fileInAssetsFolder.name), path.join(__dirname, 'project-dist', 'assets', assetsFile.name, fileInAssetsFolder.name));
+                }
+            }
         }
     }
 }
@@ -47,7 +55,7 @@ async function createAssets(srcCopyFolder, srcToCopiedFolder) {
 async function createPage() {
     await createIndexHtml();
     await createStyleFile();
-    await createAssets(path.join(__dirname, 'assets'), path.join(__dirname, 'project-dist', 'assets'));
+    await createAssets();
 }
 
 createPage();
